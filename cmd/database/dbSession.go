@@ -13,14 +13,21 @@ func dbSessionCreateTableIfNot() error {
 	return err
 }
 
-func dbSessionCreate(session structs.Session) error {
-	_, err := db.Exec("INSERT INTO sessions ("+
+func dbSessionCreate(session *structs.Session) (*structs.Session, error) {
+	res, err := db.Exec("INSERT INTO sessions ("+
 		"created_at, "+
 		"updated_at, "+
 		"user_id "+
 		") values(CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?)",
 		session.UserId)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	return dbSessionGetSessionById(int(id))
 }
 
 func dbSessionAll() ([]structs.Session, error) {

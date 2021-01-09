@@ -1,7 +1,7 @@
 package structs
 
 type QueryOptions struct {
-	Country    string `json:"country_code"`
+	Country    string `json:"country"`
 	Platform   string `json:"platform"`
 	OsVersion  string `json:"os_version"`
 	AppName    string `json:"app_name"`

@@ -17,8 +17,8 @@ func dbUserCreateTableIfNot() error {
 	return err
 }
 
-func dbUserCreate(user *structs.User) error {
-	_, err := db.Exec("INSERT INTO users ("+
+func dbUserCreate(user *structs.User) (*structs.User,error) {
+	res, err := db.Exec("INSERT INTO users ("+
 		"created_at, "+
 		"updated_at, "+
 		"username, "+
@@ -26,7 +26,14 @@ func dbUserCreate(user *structs.User) error {
 		"password, "+
 		"salt) values(CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,?,?,?,?)",
 		user.Username, user.Role, user.Password, user.Salt)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	return dbUserGetUserById(int(id))
 }
 
 func dbUserAll() ([]structs.User, error) {

@@ -1,9 +1,10 @@
 package structs
-
+import "github.com/dgrijalva/jwt-go"
 type TokenData struct {
-	ID        int    `json:"id"`
+	UserId        int    `json:"userId"`
 	CreatedAt string `json:"created_at"`
 	Username  string `json:"username"`
 	Role      int    `json:"role"`
-	SessionId string `json:"session_id"`
+	SessionId int    `json:"session_id"`
+	jwt.StandardClaims
 }

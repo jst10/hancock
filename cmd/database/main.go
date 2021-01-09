@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"log"
 	"made.by.jst10/outfit7/hancock/cmd/constants"
 	"made.by.jst10/outfit7/hancock/cmd/structs"
 )
@@ -14,79 +13,61 @@ var db *sql.DB
 var mappersVersionId = -1
 var mappers *Mappers
 
-func createTables() {
-	success := true
+func createTablesIfNot() error {
 	err := dbUserCreateTableIfNot()
 	if err != nil {
-		success = false
+		return err
 	}
 	err = dbVersionCreateTableIfNot()
 	if err != nil {
-		success = false
+		return err
 	}
 	err = dbSessionCreateTableIfNot()
 	if err != nil {
-		success = false
+		return err
 	}
 	for i := 0; i < 2; i++ {
 		err = dbSdkCreateTablesIfNot(i)
 		if err != nil {
-			success = false
+			return err
 		}
 		err = dbAppCreateTablesIfNot(i)
 		if err != nil {
-			success = false
+			return err
 		}
 		err = dbCountryCreateTablesIfNot(i)
 		if err != nil {
-			success = false
+			return err
 		}
 		err = dbPerformanceCreateTablesIfNot(i)
 		if err != nil {
-			success = false
+			return err
 		}
 	}
-
-	if success {
-		fmt.Println("All tables were successfully created.")
-	}
-
+	return nil
 }
 
-func InitDatabase() {
+func InitDatabase() error {
 	var err error
 	db, err = sql.Open("mysql",
 		"root:root@tcp(127.0.0.1:3306)/hancock")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-
 	err = db.Ping()
 	if err != nil {
-
-		log.Fatal(err)
+		return err
 	}
-	fmt.Println("DB connection has successfully initialized")
-	createTables()
-	res, e := dbVersionGetLatest()
-	fmt.Println(e)
-	fmt.Println(res)
-	fmt.Print("Read")
-	res1, err1 := dbVersionAll()
-	fmt.Println("res1")
-	fmt.Println(res1)
-	fmt.Println(err1)
-	e = dbVersionCreate(Version{DbIndex: 1})
-	fmt.Println(e)
-	res, _ = dbVersionGetLatest()
-	fmt.Println(res)
-	//err = dbUserCreate(structs.User{Role: constants.UserRoleGuest, Username: "test", Password: "test"})
-	r, e := dbUserAll()
-	//e:= dbUserDeleteAll()
-	//e:= dbUserDeleteById(3)
-	//r,e:= dbUserGetUserByUsername("test")
-	fmt.Println(r)
-	fmt.Println(e)
+	fmt.Println("DB connection has successfully established")
+	err = createTablesIfNot()
+	if err != nil {
+		return err
+	}
+	if err == nil {
+		fmt.Println("DB  initialized")
+	}
+	return nil
+	// TODO figure it out when is smart to open close db connection (definitely if we implement push/pull system)
 	//defer db.Close()
 }
 
@@ -192,56 +173,56 @@ func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceRespons
 	}, nil
 
 }
-func StorePerformances(performances []structs.Performance) error {
+func StorePerformances(performances []structs.Performance) (*Version, error) {
 	latestVersion, err := dbVersionGetLatest()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	newMappers := buildMappersFromRawData(performances)
 	newTableIndex := (latestVersion.DbIndex + 1) % 2
 
 	err = dbCountryDeleteAll(newTableIndex)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = dbAppDeleteAll(newTableIndex)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = dbSdkDeleteAll(newTableIndex)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	err = dbPerformanceDeleteAll(newTableIndex)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	for _, item := range newMappers.countries {
 		err = dbCountryCreate(newTableIndex, &item)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	for _, item := range newMappers.apps {
 		err = dbAppCreate(newTableIndex, &item)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	for _, item := range newMappers.sdks {
 		err = dbSdkCreate(newTableIndex, &item)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 	// TODO consider bulk insert for performance...
 	for index, item := range performances {
 		adType, addErr := constants.AdTypeNameToId(item.AdType)
 		if err != nil {
-			return addErr
+			return nil, addErr
 		}
 		err = dbPerformanceCreate(newTableIndex, &Performance{
 			ID:      index,
@@ -252,28 +233,31 @@ func StorePerformances(performances []structs.Performance) error {
 			Score:   item.Score,
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	err = dbVersionCreate(Version{DbIndex: newTableIndex})
-	if err != nil {
-		return err
+	version, versionErr := dbVersionCreate(&Version{DbIndex: newTableIndex})
+	if versionErr != nil {
+		return nil, err
 	}
 	// TODO place notify all services through some push pull service
-	return nil
+	return version, nil
 }
 
-func CreateUser(user *structs.User) error {
+func CreateUser(user *structs.User) (*structs.User, error) {
 	return dbUserCreate(user)
 }
-func GetUserByUsername(username string)  (*structs.User, error) {
+func GetUserByUsername(username string) (*structs.User, error) {
 	return dbUserGetUserByUsername(username)
 }
-func GetUserById(userId int)  (*structs.User, error) {
+func GetUserById(userId int) (*structs.User, error) {
 	return dbUserGetUserById(userId)
 }
-func GetSessionById(sessionId int)  (*structs.Session, error) {
+func CreateSession(session *structs.Session) (*structs.Session, error) {
+	return dbSessionCreate(session)
+}
+func GetSessionById(sessionId int) (*structs.Session, error) {
 	return dbSessionGetSessionById(sessionId)
 }
 func DeleteUserSessions(userId int) error {

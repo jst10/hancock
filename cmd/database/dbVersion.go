@@ -9,12 +9,19 @@ func dbVersionCreateTableIfNot() error {
 	return err
 }
 
-func dbVersionCreate(version Version) error {
-	_, err := db.Exec("INSERT INTO versions ("+
+func dbVersionCreate(version *Version) (*Version, error) {
+	res, err := db.Exec("INSERT INTO versions ("+
 		"created_at, db_index) "+
 		"values(CURRENT_TIMESTAMP,?)",
 		version.DbIndex)
-	return err
+	if err != nil {
+		return nil, err
+	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	return dbVersionGetVersionById(int(id))
 }
 
 func dbVersionAll() ([]Version, error) {
@@ -48,7 +55,7 @@ func dbVersionDeleteById(id int) error {
 }
 
 func dbVersionGetVersionById(id int) (*Version, error) {
-	return _getOneVersion("SELECT * FROM users WHERE id = ?", id)
+	return _getOneVersion("SELECT * FROM versions WHERE id = ?", id)
 }
 
 func dbVersionGetLatest() (*Version, error) {

@@ -1,0 +1,14 @@
+package custom_errors
+
+import "fmt"
+
+type CustomError struct {
+	Code          int    `json:"code"`
+	Info       string `json:"info"`
+	Details       string `json:"details"`
+	OriginalError error  `json:"-"`
+}
+
+func (err *CustomError) Error() string {
+	return fmt.Sprintf("Custom error (%d): %s", err.Code, err.Details)
+}
