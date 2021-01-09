@@ -8,10 +8,10 @@ func dbPerformanceCreateTablesIfNot(tableIndex int) error {
 	tableName := dbPerformanceTablePrefix + strconv.Itoa(tableIndex)
 	_, err := db.Exec("CREATE TABLE IF NOT EXISTS " + tableName + "(" +
 		"id int primary key," +
-		"sdk int, " +
-		"type int, " +
-		"app int, " +
+		"ad_type int, " +
 		"country int, " +
+		"app int, " +
+		"sdk int, " +
 		"score int)")
 	return err
 }
@@ -19,7 +19,7 @@ func dbPerformanceCreateTablesIfNot(tableIndex int) error {
 func dbPerformanceCreate(tableIndex int, performance *Performance) error {
 	tableName := dbPerformanceTablePrefix + strconv.Itoa(tableIndex)
 	_, err := db.Exec("INSERT INTO "+tableName+" ("+
-		"id, ad_type, country, app, sdk,  score ) "+
+		"id, ad_type, country, app, sdk, score ) "+
 		"values(?,?,?,?,?,?)",
 		performance.ID, performance.AdType, performance.Country, performance.App, performance.Sdk, performance.Score)
 	return err
@@ -28,7 +28,7 @@ func dbPerformanceCreate(tableIndex int, performance *Performance) error {
 func dbPerformanceAll(tableIndex int) ([]Performance, error) {
 	tableName := dbPerformanceTablePrefix + strconv.Itoa(tableIndex)
 	items := make([]Performance, 0)
-	results, err := db.Query("SELECT * FROM " + tableName)
+	results, err := db.Query("SELECT * FROM " + tableName + "  ORDER BY score DESC, sdk ASC")
 	if err != nil {
 		return nil, err
 	}

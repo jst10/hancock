@@ -11,11 +11,20 @@ import (
 )
 
 var db *sql.DB
+var mappersVersionId = -1
 var mappers *Mappers
 
 func createTables() {
 	success := true
 	err := dbUserCreateTableIfNot()
+	if err != nil {
+		success = false
+	}
+	err = dbVersionCreateTableIfNot()
+	if err != nil {
+		success = false
+	}
+	err = dbSessionCreateTableIfNot()
 	if err != nil {
 		success = false
 	}
@@ -37,47 +46,11 @@ func createTables() {
 			success = false
 		}
 	}
-	success = success && dbExec(db, "CREATE TABLE IF NOT EXISTS versions("+
-		"id int primary key auto_increment,"+
-		"db_index int NOT NULL,"+
-		"created_at TIMESTAMP default CURRENT_TIMESTAMP);")
-
-	success = success && dbExec(db, "CREATE TABLE IF NOT EXISTS sessions ("+
-		"id int primary key auto_increment,"+
-		"created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"+
-		"updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,"+
-		"user_id int NOT NULL);")
 
 	if success {
 		fmt.Println("All tables were successfully created.")
 	}
 
-}
-
-func getLatestVersion() (*Version, error) {
-	fmt.Println("getla")
-	var version Version
-	results, err := db.Query("SELECT id, created_at FROM versions ORDER BY id DESC LIMIT 1;")
-	if err != nil {
-		return nil, err
-	}
-	fmt.Println("Gavesomething")
-	for results.Next() {
-		err = results.Scan(&version.ID, &version.CreatedAt)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &version, nil
-}
-
-func createNewVersion() (*Version, error) {
-	success := dbExec(db, "INSERT INTO versions (created_at) VALUES (CURRENT_TIMESTAMP);")
-	if success {
-		return getLatestVersion()
-	} else {
-		return nil, errors.New("Error at inseritng into versions")
-	}
 }
 
 func InitDatabase() {
@@ -90,12 +63,22 @@ func InitDatabase() {
 
 	err = db.Ping()
 	if err != nil {
+
 		log.Fatal(err)
 	}
 	fmt.Println("DB connection has successfully initialized")
 	createTables()
-	getLatestVersion()
-	res, _ := createNewVersion()
+	res, e := dbVersionGetLatest()
+	fmt.Println(e)
+	fmt.Println(res)
+	fmt.Print("Read")
+	res1, err1 := dbVersionAll()
+	fmt.Println("res1")
+	fmt.Println(res1)
+	fmt.Println(err1)
+	e = dbVersionCreate(Version{DbIndex: 1})
+	fmt.Println(e)
+	res, _ = dbVersionGetLatest()
 	fmt.Println(res)
 	//err = dbUserCreate(structs.User{Role: constants.UserRoleGuest, Username: "test", Password: "test"})
 	r, e := dbUserAll()
@@ -107,25 +90,54 @@ func InitDatabase() {
 	//defer db.Close()
 }
 
-func loadMappersFromDb() error {
-	return errors.New("bleh")
+func reloadMappersFromDb(version *Version) error {
+	countries, countryErr := dbCountryAll(version.DbIndex)
+	if countryErr != nil {
+		return countryErr
+	}
+	apps, appErr := dbAppAll(version.DbIndex)
+	if appErr != nil {
+		return appErr
+	}
+	sdks, sdkErr := dbSdkAll(version.DbIndex)
+	if sdkErr != nil {
+		return sdkErr
+	}
+	mappers = buildMappersFromDBData(countries, apps, sdks)
+	mappersVersionId = version.ID
+	return nil
+
 }
 
-func reloadEverythingFromDBIntoCache() error {
+func reloadCacheFromDb(version *Version) error {
+	performances, err := dbPerformanceAll(version.DbIndex)
+	if err != nil {
+		return err
+	}
+	savePerformancesInCache(version.ID, mappers.countries, mappers.apps, performances)
 	return nil
 }
 
-func GetSdks(options *structs.QueryOptions) (*structs.PerformanceResponse, error) {
-	latestVersion, err := getLatestVersion()
+func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceResponse, error) {
+	latestVersion, err := dbVersionGetLatest()
 	if err != nil {
 		return nil, err
 	}
-	if mappers == nil {
-		err := loadMappersFromDb()
+
+	if latestVersion.ID != mappersVersionId {
+		err := reloadMappersFromDb(latestVersion)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	if latestVersion.ID != cacheVersionId {
+		err := reloadCacheFromDb(latestVersion)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	countryID, existCountryName := mappers.countryNameToId[options.Country]
 	appID, existAppName := mappers.appNameToId[options.AppName]
 	if !existAppName {
@@ -134,13 +146,7 @@ func GetSdks(options *structs.QueryOptions) (*structs.PerformanceResponse, error
 	if !existCountryName {
 		return nil, errors.New("Country name is not valid")
 	}
-	cacheVersionId := getCacheVersionId()
-	if latestVersion.ID != cacheVersionId {
-		err := reloadEverythingFromDBIntoCache()
-		if err != nil {
-			return nil, err
-		}
-	}
+
 	bannerPerformances := getSdksFromCache(constants.AdTypeBannerId, countryID, appID)
 	interstitialPerformances := getSdksFromCache(constants.AdTypeInterstitialId, countryID, appID)
 	rewardedPerformances := getSdksFromCache(constants.AdTypeRewardedId, countryID, appID)
@@ -186,6 +192,90 @@ func GetSdks(options *structs.QueryOptions) (*structs.PerformanceResponse, error
 	}, nil
 
 }
-func StorePerformances(performances []structs.Performance) {
+func StorePerformances(performances []structs.Performance) error {
+	latestVersion, err := dbVersionGetLatest()
+	if err != nil {
+		return err
+	}
+	newMappers := buildMappersFromRawData(performances)
+	newTableIndex := (latestVersion.DbIndex + 1) % 2
 
+	err = dbCountryDeleteAll(newTableIndex)
+	if err != nil {
+		return err
+	}
+	err = dbAppDeleteAll(newTableIndex)
+	if err != nil {
+		return err
+	}
+	err = dbSdkDeleteAll(newTableIndex)
+	if err != nil {
+		return err
+	}
+	err = dbPerformanceDeleteAll(newTableIndex)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range newMappers.countries {
+		err = dbCountryCreate(newTableIndex, &item)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, item := range newMappers.apps {
+		err = dbAppCreate(newTableIndex, &item)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, item := range newMappers.sdks {
+		err = dbSdkCreate(newTableIndex, &item)
+		if err != nil {
+			return err
+		}
+	}
+	// TODO consider bulk insert for performance...
+	for index, item := range performances {
+		adType, addErr := constants.AdTypeNameToId(item.AdType)
+		if err != nil {
+			return addErr
+		}
+		err = dbPerformanceCreate(newTableIndex, &Performance{
+			ID:      index,
+			AdType:  adType,
+			Country: newMappers.countryNameToId[item.Country],
+			App:     newMappers.appNameToId[item.App],
+			Sdk:     newMappers.sdkNameToId[item.Sdk],
+			Score:   item.Score,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	err = dbVersionCreate(Version{DbIndex: newTableIndex})
+	if err != nil {
+		return err
+	}
+	// TODO place notify all services through some push pull service
+	return nil
+}
+
+func CreateUser(user *structs.User) error {
+	return dbUserCreate(user)
+}
+func GetUserByUsername(username string)  (*structs.User, error) {
+	return dbUserGetUserByUsername(username)
+}
+func GetUserById(userId int)  (*structs.User, error) {
+	return dbUserGetUserById(userId)
+}
+func GetSessionById(sessionId int)  (*structs.Session, error) {
+	return dbSessionGetSessionById(sessionId)
+}
+func DeleteUserSessions(userId int) error {
+	return dbSessionDeleteByUserId(userId)
 }

@@ -1,8 +1,10 @@
 package auth
 
 import (
+	"crypto/rand"
 	"crypto/sha512"
 	"encoding/base64"
+	"made.by.jst10/outfit7/hancock/cmd/structs"
 )
 
 func createSalt() (string, error) {
@@ -24,8 +26,9 @@ func createHash(password string, salt string) string {
 	return base64EncodedPasswordHash
 }
 
-//func doPasswordsMatch(hashedPassword, currPassword string, salt string) bool {
-//	var saltBytes = []byte(salt)
-//	var currPasswordHash = hashPassword(currPassword, saltBytes)
-//	return hashedPassword == currPasswordHash
-//}
+func doPasswordsMatch(user *structs.User, enteredPassword string) bool {
+	var enteredPasswordHash = createHash(enteredPassword, user.Salt)
+	return user.Password == enteredPasswordHash
+}
+
+

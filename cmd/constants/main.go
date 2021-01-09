@@ -14,7 +14,7 @@ const AdTypeRewardedId = 2
 var AddTypes = []string{AdTypeBanner, AdTypeInterstitial, AdTypeRewarded}
 var AddTypesIds = []int{AdTypeBannerId, AdTypeInterstitialId, AdTypeRewardedId}
 
-func adTypeNameToId(addTypeName string) (int, error) {
+func AdTypeNameToId(addTypeName string) (int, error) {
 	switch addTypeName {
 	case AdTypeBanner:
 		return AdTypeBannerId, nil
@@ -27,7 +27,7 @@ func adTypeNameToId(addTypeName string) (int, error) {
 	}
 }
 
-func adTypeIdToName(addTypeId int) (string, error) {
+func AdTypeIdToName(addTypeId int) (string, error) {
 	switch addTypeId {
 	case AdTypeBannerId:
 		return AdTypeBanner, nil

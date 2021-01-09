@@ -37,7 +37,7 @@ type SdkPerformance struct {
 type Version struct {
 	ID        int    `json:"id"`
 	CreatedAt string `json:"created_at"`
-	DbIndex   string `json:"db_index"`
+	DbIndex   int    `json:"db_index"`
 }
 
 type Mappers struct {

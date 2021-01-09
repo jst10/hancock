@@ -17,7 +17,7 @@ func dbUserCreateTableIfNot() error {
 	return err
 }
 
-func dbUserCreate(user structs.User) error {
+func dbUserCreate(user *structs.User) error {
 	_, err := db.Exec("INSERT INTO users ("+
 		"created_at, "+
 		"updated_at, "+
