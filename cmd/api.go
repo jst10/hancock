@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
+	"made.by.jst10/outfit7/hancock/cmd/structs"
 	"net/http"
 )
 
@@ -16,12 +17,11 @@ type Article struct {
 	Content string `json:"content"`
 }
 
+func advanceFilter(ro *structs.QueryOptions) {
 
-func advanceFilter(ro *QueryOptions) {
-
-//1. ad mob doesn't work on any android os version 9
-//2. no FB in CN
-//3. AdMob-OptOut should be present in list only if there is no AdMob in list
+	//1. ad mob doesn't work on any android os version 9
+	//2. no FB in CN
+	//3. AdMob-OptOut should be present in list only if there is no AdMob in list
 }
 
 func handleGetPerformances(w http.ResponseWriter, r *http.Request) {
@@ -40,7 +40,7 @@ func handleGetPerformances(w http.ResponseWriter, r *http.Request) {
 }
 func handleCreatePerformances(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusForbidden)
-	json.NewEncoder(w).Encode(HttpError{"No kul1 "})
+	json.NewEncoder(w).Encode(structs.NewHttpError("No kul1 "))
 }
 
 func performancesHandler(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +52,7 @@ func performancesHandler(w http.ResponseWriter, r *http.Request) {
 		handleCreatePerformances(w, r)
 	} else {
 		w.WriteHeader(http.StatusFound)
-		json.NewEncoder(w).Encode(HttpError{"No kul"})
+		json.NewEncoder(w).Encode(structs.NewHttpError("No kul"))
 	}
 
 }
