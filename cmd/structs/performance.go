@@ -1,7 +1,7 @@
 package structs
 
 type Performance struct {
-	AdType string `json:"ad_type"`
+	AdType  string `json:"ad_type"`
 	Country string `json:"country"`
 	App     string `json:"app"`
 	Sdk     string `json:"sdk"`

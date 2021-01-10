@@ -1,7 +1,7 @@
 package constants
 
 import (
-	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 )
 
 const UserRoleGuest = 10

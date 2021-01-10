@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"made.by.jst10/outfit7/hancock/cmd/config"
 	"made.by.jst10/outfit7/hancock/cmd/constants"
-	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 	"made.by.jst10/outfit7/hancock/cmd/structs"
 )
 
@@ -13,6 +14,7 @@ var db *sql.DB
 var mappersVersionId = -1
 var mappers *Mappers
 
+// TODO group apps, sdks and countries into one generic object -> reduce copy paste code
 func createTablesIfNot() *custom_errors.CustomError {
 	err := dbUserCreateTableIfNot()
 	if err != nil {
@@ -47,10 +49,10 @@ func createTablesIfNot() *custom_errors.CustomError {
 	return nil
 }
 
-func InitDatabase() *custom_errors.CustomError {
+func InitDatabase(configs *config.DbConfigs) *custom_errors.CustomError {
 	var err *custom_errors.CustomError
-	db, err = sqlOpen("mysql",
-		"root:root@tcp(127.0.0.1:3306)/hancock")
+	var connectionUrl = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", configs.Username, configs.Password, configs.Host, configs.Port, configs.Database)
+	db, err = sqlOpen("mysql", connectionUrl)
 	if err != nil {
 		return err
 	}
@@ -119,6 +121,8 @@ func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceRespons
 		}
 	}
 
+	fmt.Println(options.Country)
+	fmt.Println(mappers.countryNameToId)
 	countryID, existCountryName := mappers.countryNameToId[options.Country]
 	appID, existAppName := mappers.appNameToId[options.AppName]
 	if !existAppName {
@@ -132,41 +136,34 @@ func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceRespons
 	interstitialPerformances := getSdksFromCache(constants.AdTypeInterstitialId, countryID, appID)
 	rewardedPerformances := getSdksFromCache(constants.AdTypeRewardedId, countryID, appID)
 
-	bannerR := make([]structs.Performance, len(bannerPerformances))
-	interstitialR := make([]structs.Performance, len(interstitialPerformances))
-	rewardedR := make([]structs.Performance, len(rewardedPerformances))
+	bannerR := make([]structs.SdkScore, len(bannerPerformances))
+	interstitialR := make([]structs.SdkScore, len(interstitialPerformances))
+	rewardedR := make([]structs.SdkScore, len(rewardedPerformances))
 
 	for index, performance := range bannerPerformances {
-		bannerR[index] = structs.Performance{
-			AdType:  constants.AdTypeBanner,
-			Country: options.Country,
-			App:     options.AppName,
-			Sdk:     mappers.sdkIdToName[int(performance.Sdk)],
-			Score:   int(performance.Score),
+		bannerR[index] = structs.SdkScore{
+			Sdk:   mappers.sdkIdToName[int(performance.Sdk)],
+			Score: int(performance.Score),
 		}
 	}
 
 	for index, performance := range interstitialPerformances {
-		interstitialR[index] = structs.Performance{
-			AdType:  constants.AdTypeInterstitial,
-			Country: options.Country,
-			App:     options.AppName,
-			Sdk:     mappers.sdkIdToName[int(performance.Sdk)],
-			Score:   int(performance.Score),
+		interstitialR[index] = structs.SdkScore{
+			Sdk:   mappers.sdkIdToName[int(performance.Sdk)],
+			Score: int(performance.Score),
 		}
 	}
 
 	for index, performance := range rewardedPerformances {
-		rewardedR[index] = structs.Performance{
-			AdType:  constants.AdTypeInterstitial,
-			Country: options.Country,
-			App:     options.AppName,
-			Sdk:     mappers.sdkIdToName[int(performance.Sdk)],
-			Score:   int(performance.Score),
+		rewardedR[index] = structs.SdkScore{
+			Sdk:   mappers.sdkIdToName[int(performance.Sdk)],
+			Score: int(performance.Score),
 		}
 	}
 
 	return &structs.PerformanceResponse{
+		Country:      options.Country,
+		App:          options.AppName,
 		Banner:       bannerR,
 		Interstitial: interstitialR,
 		Reward:       rewardedR,
@@ -174,12 +171,22 @@ func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceRespons
 
 }
 func StorePerformances(performances []structs.Performance) (*Version, *custom_errors.CustomError) {
-	latestVersion, err := dbVersionGetLatest()
+	var newTableIndex int
+	versionsCount, err := dbVersionCount()
 	if err != nil {
 		return nil, err.AST("store performances")
 	}
+	if versionsCount == 0 {
+		newTableIndex = 0
+	} else {
+		latestVersion, err := dbVersionGetLatest()
+		if err != nil {
+			return nil, err.AST("store performances")
+		}
+		newTableIndex = (latestVersion.DbIndex + 1) % 2
+	}
+
 	newMappers := buildMappersFromRawData(performances)
-	newTableIndex := (latestVersion.DbIndex + 1) % 2
 
 	err = dbCountryDeleteAll(newTableIndex)
 	if err != nil {

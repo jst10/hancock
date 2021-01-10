@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/golang/gddo/httputil/header"
 	"io"
-	. "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+	. "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 	"net/http"
 	"strings"
 )

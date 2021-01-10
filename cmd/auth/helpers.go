@@ -5,7 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"github.com/dgrijalva/jwt-go"
-	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 	"made.by.jst10/outfit7/hancock/cmd/structs"
 	"time"
 )

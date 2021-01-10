@@ -1,6 +1,24 @@
 -include ../../x-collection/tools/release-scripts/src/MakefileQA
 
 
+run:
+	cd cmd; go run *.go
+
+test-api:
+	cd cmd/api; go test -v *.go
+
+test: test-api
+
+login-user:
+	curl --location --request POST 'http://localhost:10000/api/auth' \
+	--header 'Content-Type: application/json' \
+	--data-raw '{"username":"user","password":"user"}'
+
+login-admin:
+	curl --location --request POST 'http://localhost:10000/api/auth' \
+	--header 'Content-Type: application/json' \
+	--data-raw '{"username":"admin","password":"admin"}'
+
 stop-local-db:
 	docker rm -f mysql
 

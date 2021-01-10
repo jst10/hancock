@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -6,8 +6,9 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"made.by.jst10/outfit7/hancock/cmd/auth"
+	"made.by.jst10/outfit7/hancock/cmd/config"
 	"made.by.jst10/outfit7/hancock/cmd/constants"
-	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 	"made.by.jst10/outfit7/hancock/cmd/database"
 	"made.by.jst10/outfit7/hancock/cmd/structs"
 	"net/http"
@@ -30,11 +31,12 @@ func respondError(w http.ResponseWriter, statusCode int, err *custom_errors.Cust
 	json.NewEncoder(w).Encode(err)
 	fmt.Println("Error")
 	fmt.Println(err)
+	fmt.Println(err.StackTrace)
 	fmt.Println(err.OriginalError)
 }
 
-func removeSdksFromPerformanceResults(sdksToRemove map[string]bool, listOfPerformances []structs.Performance) []structs.Performance {
-	results := make([]structs.Performance, 0)
+func removeSdksFromPerformanceResults(sdksToRemove map[string]bool, listOfPerformances []structs.SdkScore) []structs.SdkScore {
+	results := make([]structs.SdkScore, 0)
 	for _, performance := range listOfPerformances {
 		if !sdksToRemove[performance.Sdk] {
 			results = append(results, performance)
@@ -43,7 +45,7 @@ func removeSdksFromPerformanceResults(sdksToRemove map[string]bool, listOfPerfor
 	return results
 }
 
-func postProcess(qo *structs.QueryOptions, performances *structs.PerformanceResponse) *structs.PerformanceResponse {
+func postProcessPerformancesResults(qo *structs.QueryOptions, performances *structs.PerformanceResponse) *structs.PerformanceResponse {
 	sdksToRemove := make(map[string]bool)
 	if qo.Country == CountryCN {
 		sdksToRemove[SdkFacebook] = true
@@ -200,7 +202,7 @@ func handleGetPerformances(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, err)
 		return
 	}
-	performances = postProcess(&qo, performances)
+	performances = postProcessPerformancesResults(&qo, performances)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(performances)
@@ -222,7 +224,10 @@ func handleCreatePerformances(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusBadRequest, err)
 		return
 	}
-
+	if !arePerformancesValid(performances) {
+		respondError(w, http.StatusForbidden, custom_errors.GetNotValidDataError("Make sure that are all 3 ad types in you data, and complete matrix for type,country and app_name"))
+		return
+	}
 	fmt.Println("GOT BODY")
 	fmt.Println(performances)
 
@@ -253,10 +258,10 @@ func authHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func startApi() {
+func StartApi(configs *config.ApiConfigs) {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/api/auth", authHandler).Methods("POST", "PUT", "DELETE")
 	myRouter.HandleFunc("/api/performances", performancesHandler).Methods("POST", "GET")
-	log.Println("Starting http server on port 10000")
-	log.Fatal(http.ListenAndServe(":10000", myRouter))
+	log.Println("Starting http server on port:", configs.Port)
+	log.Fatal(http.ListenAndServe(":"+configs.Port, myRouter))
 }

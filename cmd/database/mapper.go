@@ -1,17 +1,19 @@
 package database
 
-import "made.by.jst10/outfit7/hancock/cmd/structs"
+import (
+	"made.by.jst10/outfit7/hancock/cmd/structs"
+)
 
 func buildMappersFromRawData(performances []structs.Performance) *Mappers {
-	countries := make([]Country, 1)
+	countries := make([]Country, 0)
 	countryNameToId := make(map[string]int)
 	countryIdToName := make(map[int]string)
 
-	apps := make([]App, 1)
+	apps := make([]App, 0)
 	appNameToId := make(map[string]int)
 	appIdToName := make(map[int]string)
 
-	sdks := make([]Sdk, 1)
+	sdks := make([]Sdk, 0)
 	sdkNameToId := make(map[string]int)
 	sdkIdToName := make(map[int]string)
 
@@ -31,7 +33,7 @@ func buildMappersFromRawData(performances []structs.Performance) *Mappers {
 
 		_, prs = appNameToId[appName]
 		if !prs {
-			id := len(countries)
+			id := len(apps)
 			app := App{ID: id, Name: appName}
 			apps = append(apps, app)
 			appNameToId[app.Name] = app.ID
@@ -40,7 +42,7 @@ func buildMappersFromRawData(performances []structs.Performance) *Mappers {
 
 		_, prs = sdkNameToId[sdkName]
 		if !prs {
-			id := len(countries)
+			id := len(sdks)
 			sdk := Sdk{ID: id, Name: sdkName}
 			sdks = append(sdks, sdk)
 			sdkNameToId[sdk.Name] = sdk.ID
@@ -64,7 +66,6 @@ func buildMappersFromDBData(
 	apps []App,
 	sdks []Sdk,
 ) *Mappers {
-
 	countryNameToId := make(map[string]int)
 	countryIdToName := make(map[int]string)
 
@@ -89,6 +90,7 @@ func buildMappersFromDBData(
 
 	return &Mappers{
 		countries:       countries,
+		countryNameToId: countryNameToId,
 		countryIdToName: countryIdToName,
 		apps:            apps,
 		appNameToId:     appNameToId,

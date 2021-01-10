@@ -1,8 +1,8 @@
 package database
 
-import custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+import custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 
-func dbVersionCreateTableIfNot()  *custom_errors.CustomError {
+func dbVersionCreateTableIfNot() *custom_errors.CustomError {
 	_, err := dbExec("CREATE TABLE IF NOT EXISTS versions (" +
 		"id int primary key auto_increment," +
 		"created_at TIMESTAMP default CURRENT_TIMESTAMP," +
@@ -75,11 +75,25 @@ func dbVersionGetVersionById(id int) (*Version, *custom_errors.CustomError) {
 func dbVersionGetLatest() (*Version, *custom_errors.CustomError) {
 	return _getOneVersion("SELECT * FROM versions ORDER BY id DESC LIMIT 1;")
 }
+func dbVersionCount() (int, *custom_errors.CustomError) {
+	results, err := dbQuery("SELECT COUNT(*) FROM versions;")
+	if err != nil {
+		return -1, err.AST("versions count")
+	}
+	var count int
+	for results.Next() {
+		err = dbScanRows(results, &count)
+		if err != nil {
+			return -1, err.AST("versions count")
+		}
+	}
+	return count, nil
+}
 
 func _getOneVersion(query string, args ...interface{}) (*Version, *custom_errors.CustomError) {
 	var version Version
 	row := dbQueryRow(query, args...)
-	err:=dbScanRow(row,
+	err := dbScanRow(row,
 		&version.ID,
 		&version.CreatedAt,
 		&version.DbIndex)

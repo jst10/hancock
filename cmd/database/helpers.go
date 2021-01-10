@@ -2,7 +2,7 @@ package database
 
 import (
 	"database/sql"
-	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 )
 
 func sqlOpen(driverName, dataSourceName string) (*sql.DB, *custom_errors.CustomError) {

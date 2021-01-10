@@ -57,6 +57,10 @@ func GetErrorGettingCookie(originalError error, details string) *CustomError {
 func GetInvalidJWT(details string) *CustomError {
 	return &CustomError{Code: 19, Info: "Invalid JWT", Details: details}
 }
+func GetErrorLoadingConfigs(originalError error, details string) *CustomError {
+	return &CustomError{Code: 20, OriginalError: originalError, Info: "Error loading config", Details: details}
+}
+
 func GetNotFoundErrorr(originalError error) *CustomError {
 	return &CustomError{Code: 20, OriginalError: originalError, Info: "Not found"}
 }

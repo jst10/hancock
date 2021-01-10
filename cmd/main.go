@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"made.by.jst10/outfit7/hancock/cmd/api"
 	"made.by.jst10/outfit7/hancock/cmd/auth"
+	"made.by.jst10/outfit7/hancock/cmd/config"
 	"made.by.jst10/outfit7/hancock/cmd/constants"
-	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 	"made.by.jst10/outfit7/hancock/cmd/database"
 	"made.by.jst10/outfit7/hancock/cmd/structs"
 )
@@ -21,7 +23,7 @@ var userAdmin = structs.User{
 	Role:     constants.UserRoleAdmin,
 }
 
-func insertDefaultUserInDBIfNot()  *custom_errors.CustomError  {
+func insertDefaultUserInDBIfNot() *custom_errors.CustomError {
 	_, err := database.GetUserByUsername(userUser.Username)
 	if err != nil {
 		_, err := auth.CreateUser(&userUser)
@@ -40,7 +42,12 @@ func insertDefaultUserInDBIfNot()  *custom_errors.CustomError  {
 }
 
 func main() {
-	err := database.InitDatabase()
+	appConfigs := &config.AppConfigs{}
+	err := config.LoadConfig(appConfigs)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = database.InitDatabase(appConfigs.Db)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,5 +55,5 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	startApi()
+	api.StartApi(appConfigs.Api)
 }

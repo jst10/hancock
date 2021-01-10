@@ -36,7 +36,7 @@ func savePerformancesInCache(
 		//It is not necessary that I have same number of SDK, because data is already preprocessed
 		//eg. Removed FB from CN country
 		if tmpCache[adTypeId][countryId][appId] == nil {
-			tmpCache[adTypeId][countryId][appId] = make([]SdkPerformance, 1)
+			tmpCache[adTypeId][countryId][appId] = make([]SdkPerformance, 0)
 		}
 		//	Data received into method are already sorted by score, so nothing more is needed to do here
 		tmpCache[adTypeId][countryId][appId] = append(tmpCache[adTypeId][countryId][appId], SdkPerformance{Sdk: uint8(sdkId), Score: uint8(score)})
