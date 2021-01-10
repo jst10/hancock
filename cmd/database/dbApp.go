@@ -1,31 +1,42 @@
 package database
 
-import "strconv"
+import (
+	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
+	"strconv"
+)
 
 const dbAppTablePrefix = "apps"
 
-func dbAppCreateTablesIfNot(tableIndex int) error {
+func dbAppCreateTablesIfNot(tableIndex int) *custom_errors.CustomError {
 	tableName := dbAppTablePrefix + strconv.Itoa(tableIndex)
-	_, err := db.Exec("CREATE TABLE IF NOT EXISTS " + tableName + "(" +
+	_, err := dbExec("CREATE TABLE IF NOT EXISTS " + tableName + "(" +
 		"id int primary key," +
 		"name text);")
-	return err
+	if err != nil {
+		return err.AST("create app table")
+	} else {
+		return nil
+	}
 }
-func dbAppCreate(tableIndex int, app *App) error {
+func dbAppCreate(tableIndex int, app *App) *custom_errors.CustomError {
 	tableName := dbAppTablePrefix + strconv.Itoa(tableIndex)
-	_, err := db.Exec("INSERT INTO "+tableName+" (id, name ) values(?,?)", app.ID, app.Name)
-	return err
+	_, err := dbExec("INSERT INTO "+tableName+" (id, name ) values(?,?)", app.ID, app.Name)
+	if err != nil {
+		return err.AST("insert into app table")
+	} else {
+		return nil
+	}
 }
-func dbAppAll(tableIndex int) ([]App, error) {
+func dbAppAll(tableIndex int) ([]App, *custom_errors.CustomError) {
 	tableName := dbAppTablePrefix + strconv.Itoa(tableIndex)
 	items := make([]App, 0)
-	results, err := db.Query("SELECT * FROM " + tableName)
+	results, err := dbQuery("SELECT * FROM " + tableName)
 	if err != nil {
-		return nil, err
+		return nil, err.AST("select from app table")
 	}
 	for results.Next() {
 		var item App
-		err = results.Scan(
+		err = dbScanRows(results,
 			&item.ID,
 			&item.Name)
 		if err != nil {
@@ -35,8 +46,12 @@ func dbAppAll(tableIndex int) ([]App, error) {
 	}
 	return items, nil
 }
-func dbAppDeleteAll(tableIndex int) error {
+func dbAppDeleteAll(tableIndex int) *custom_errors.CustomError {
 	tableName := dbAppTablePrefix + strconv.Itoa(tableIndex)
-	_, err := db.Exec("DELETE FROM " + tableName)
-	return err
+	_, err := dbExec("DELETE FROM " + tableName)
+	if err != nil {
+		return err.AST("delete from app table")
+	} else {
+		return nil
+	}
 }

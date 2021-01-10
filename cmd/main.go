@@ -4,6 +4,7 @@ import (
 	"log"
 	"made.by.jst10/outfit7/hancock/cmd/auth"
 	"made.by.jst10/outfit7/hancock/cmd/constants"
+	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom-errors"
 	"made.by.jst10/outfit7/hancock/cmd/database"
 	"made.by.jst10/outfit7/hancock/cmd/structs"
 )
@@ -20,19 +21,19 @@ var userAdmin = structs.User{
 	Role:     constants.UserRoleAdmin,
 }
 
-func insertDefaultUserInDBIfNot() error {
+func insertDefaultUserInDBIfNot()  *custom_errors.CustomError  {
 	_, err := database.GetUserByUsername(userUser.Username)
 	if err != nil {
 		_, err := auth.CreateUser(&userUser)
 		if err != nil {
-			return err
+			return err.AST("insert default user in db if not")
 		}
 	}
 	_, err = database.GetUserByUsername(userAdmin.Username)
 	if err != nil {
 		_, err := auth.CreateUser(&userAdmin)
 		if err != nil {
-			return err
+			return err.AST("insert default user in db if not")
 		}
 	}
 	return nil

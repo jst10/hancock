@@ -1,31 +1,41 @@
 # Hancock
+Project is meant to store and serve ad network SDKs performances.
+For long term storage is used MySql database which need to be configured.
 
-This project is meant to be deployed on Google clouds.
+## Configuration
+## Api
+### Auth
+Authentication request:
+- Endpoint: `/api/auth`
+- Method: `POST`
+- Body:
+```json
+{
+    "username":"user",
+    "password":"user"
+}
+```
 
-## Google clouds configuration
-So first you need to prepare you google cloud.
-Requirements:
-- sql database
-- push/pull system (optional)
+Response: 
+- Status code: 200
+- Cookies: `token`, `refresh_token`
 
-1. Go to: https://console.cloud.google.com/
-1. Click Get started for free (I you first time meet to it as I am)
-1. Fill form next next next...
-1. Create new project 
-   
+Curl: 
+```bash
+curl --location --request POST 'http://localhost:10000/api/auth' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "username":"user",
+    "password":"user"
+}'
+```
 
-1. Navigate to Api&&Services
-1. Enable Api&services
-1. App engine admin api
-1. Enable
+### Performances
 
-
-1. Navigate to app engine
-1. Create app engine
-
-
-GoToGcloud shell:
-1. gcloud projects list
-1. gcloud config set project hanckock
-
+## Make commands
+### Local dockerized database
+### App running
+### Base controlling commands
+make login-user
+make login-admin
 ## Sql database
