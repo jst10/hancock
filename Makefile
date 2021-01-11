@@ -4,10 +4,16 @@
 run:
 	cd cmd; go run *.go
 
+build:
+	cd cmd; go build -o ../bin/hancock
+
 test-api:
 	cd cmd/api; go test -v *.go
 
 test: test-api
+
+integration-test:
+	cd integration-tests; go run *.go
 
 login-user:
 	curl --location --request POST 'http://localhost:10000/api/auth' \

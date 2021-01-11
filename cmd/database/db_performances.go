@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 	"strconv"
 )
@@ -34,6 +35,25 @@ func dbPerformanceCreate(tableIndex int, performance *Performance) *custom_error
 	} else {
 		return nil
 	}
+}
+
+func dbPerformanceCreateBulk(tableIndex int, performances []Performance) *custom_errors.CustomError {
+	tableName := dbPerformanceTablePrefix + strconv.Itoa(tableIndex)
+	//since are only integer there are no problems with sql injection
+	limit := 30000
+	for i := 0; i < len(performances); i += limit {
+		query := "INSERT INTO " + tableName + " (id, ad_type, country, app, sdk, score ) VALUES"
+		for j := i; j < min(i+limit, len(performances)); j++ {
+			performance := performances[j]
+			query = query + fmt.Sprintf("(%d, %d,%d, %d,%d, %d),", performance.ID, performance.AdType, performance.Country, performance.App, performance.Sdk, performance.Score)
+		}
+		query = query[:len(query)-1] + ";"
+		_, err := dbExec(query)
+		if err != nil {
+			return err.AST("insert into performance table")
+		}
+	}
+	return nil
 }
 
 func dbPerformanceAll(tableIndex int) ([]Performance, *custom_errors.CustomError) {

@@ -8,7 +8,13 @@ type Performance struct {
 	Score   int    `json:"score"`
 }
 
-func NewPerformance() *Performance {
-	ap := Performance{}
+func NewPerformance(adType, country, app, sdk string, score int) *Performance {
+	ap := Performance{
+		AdType:  adType,
+		Country: country,
+		App:     app,
+		Sdk:     sdk,
+		Score:   score,
+	}
 	return &ap
 }

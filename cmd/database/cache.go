@@ -33,8 +33,6 @@ func savePerformancesInCache(
 			tmpCache[adTypeId][countryId] = make([][]SdkPerformance, numberOfApps)
 		}
 
-		//It is not necessary that I have same number of SDK, because data is already preprocessed
-		//eg. Removed FB from CN country
 		if tmpCache[adTypeId][countryId][appId] == nil {
 			tmpCache[adTypeId][countryId][appId] = make([]SdkPerformance, 0)
 		}
@@ -52,8 +50,6 @@ func getSdksFromCache(adTypeId int, countryId int, appId int) []SdkPerformance {
 		return nil
 	}
 }
-
-
 
 func invalidateCache() {
 	cacheVersionId = -1

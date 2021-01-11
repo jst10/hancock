@@ -48,9 +48,11 @@ func buildMappersFromRawData(performances []structs.Performance) *Mappers {
 			sdkNameToId[sdk.Name] = sdk.ID
 			sdkIdToName[sdk.ID] = sdk.Name
 		}
+
 	}
 	return &Mappers{
 		countries:       countries,
+		countryNameToId: countryNameToId,
 		countryIdToName: countryIdToName,
 		apps:            apps,
 		appNameToId:     appNameToId,

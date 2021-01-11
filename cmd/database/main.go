@@ -121,8 +121,6 @@ func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceRespons
 		}
 	}
 
-	fmt.Println(options.Country)
-	fmt.Println(mappers.countryNameToId)
 	countryID, existCountryName := mappers.countryNameToId[options.Country]
 	appID, existAppName := mappers.appNameToId[options.AppName]
 	if !existAppName {
@@ -225,13 +223,14 @@ func StorePerformances(performances []structs.Performance) (*Version, *custom_er
 			return nil, err.AST("store performances")
 		}
 	}
-	// TODO consider bulk insert for performance...
+
+	data := make([]Performance, 0, len(performances))
 	for index, item := range performances {
 		adType, err := constants.AdTypeNameToId(item.AdType)
 		if err != nil {
 			return nil, err.AST("store performances")
 		}
-		err = dbPerformanceCreate(newTableIndex, &Performance{
+		data = append(data, Performance{
 			ID:      index,
 			AdType:  adType,
 			Country: newMappers.countryNameToId[item.Country],
@@ -239,10 +238,8 @@ func StorePerformances(performances []structs.Performance) (*Version, *custom_er
 			Sdk:     newMappers.sdkNameToId[item.Sdk],
 			Score:   item.Score,
 		})
-		if err != nil {
-			return nil, err.AST("store performances")
-		}
 	}
+	err = dbPerformanceCreateBulk(newTableIndex, data)
 
 	version, err := dbVersionCreate(&Version{DbIndex: newTableIndex})
 	if err != nil {

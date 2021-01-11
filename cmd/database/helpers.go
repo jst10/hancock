@@ -5,6 +5,13 @@ import (
 	custom_errors "made.by.jst10/outfit7/hancock/cmd/custom_errors"
 )
 
+func min(a, b int) int {
+	if a <= b {
+		return a
+	}
+	return b
+}
+
 func sqlOpen(driverName, dataSourceName string) (*sql.DB, *custom_errors.CustomError) {
 	result, err := sql.Open(driverName, dataSourceName)
 	if err != nil {

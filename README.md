@@ -1,8 +1,10 @@
 ##### disclaimer
-This is some kind `hello world` project in `golang` for me.
-So it may contain some not commonly used practices among `golang` developers (still learning, but for now: love error handling approach).
+
+This is some kind `hello world` project in `golang` for me. So it may contain some not commonly used practices
+among `golang` developers (still learning, but for now: love error handling approach).
 
 # Hancock
+
 Service is meant to store and serve ad network SDKs performances. For long term storage is used MySql database which
 need to be configured.
 
@@ -225,11 +227,24 @@ make restart-local-db
 make run
 ```
 
+### App building
+
+```bash
+make build
+```
+
 ### Unit testing
 
 ```bash
 make test
 ```
+
+### Integration testing
+
+```bash
+make integration-test
+```
+
 ### Base controlling commands
 
 ```bash

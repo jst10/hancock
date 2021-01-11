@@ -8,7 +8,13 @@ type QueryOptions struct {
 	AppVersion string `json:"app_version"`
 }
 
-func NewQueryOptions() *QueryOptions {
-	qO := QueryOptions{}
+func NewQueryOptions(country, platform, osVersion, appName, appVersion string) *QueryOptions {
+	qO := QueryOptions{
+		Country:    country,
+		Platform:   platform,
+		OsVersion:  osVersion,
+		AppName:    appName,
+		AppVersion: appVersion,
+	}
 	return &qO
 }

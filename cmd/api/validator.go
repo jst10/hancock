@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"made.by.jst10/outfit7/hancock/cmd/constants"
 	"made.by.jst10/outfit7/hancock/cmd/structs"
 )
@@ -42,7 +41,6 @@ func arePerformancesValid(performances []structs.Performance) bool {
 	if len(constants.AddTypes) != len(adTypes) {
 		return false
 	}
-	fmt.Println("sd1")
 	for _, adType := range constants.AddTypes {
 		_, exist := adTypes[adType]
 		if !exist {
@@ -50,17 +48,13 @@ func arePerformancesValid(performances []structs.Performance) bool {
 		}
 	}
 
-	fmt.Println("sd2")
 	numberOfCountries := len(countries)
 	for _, v := range adTypeToCountries {
 		tmp := len(v)
-		fmt.Println(tmp)
-		fmt.Println(v)
 		if tmp != numberOfCountries {
 			return false
 		}
 	}
-	fmt.Println("sd3")
 
 	numberOfApps := len(apps)
 	for _, v := range adTypeCountryToApps {
@@ -69,6 +63,5 @@ func arePerformancesValid(performances []structs.Performance) bool {
 			return false
 		}
 	}
-	fmt.Println("sd4")
 	return true
 }
