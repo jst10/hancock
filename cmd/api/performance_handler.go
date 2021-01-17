@@ -61,7 +61,7 @@ func handleCreatePerformances(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	performances := make([]structs.Performance, 0)
+	performances := make([]*structs.Performance, 0)
 	err = decodeJSONBody(w, r, &performances)
 	if err != nil {
 		respondError(w, http.StatusBadRequest, err)

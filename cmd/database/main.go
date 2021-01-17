@@ -89,7 +89,6 @@ func reloadMappersFromDb(version *Version) *custom_errors.CustomError {
 	mappers = buildMappersFromDBData(countries, apps, sdks)
 	mappersVersionId = version.ID
 	return nil
-
 }
 
 func reloadCacheFromDb(version *Version) *custom_errors.CustomError {
@@ -97,10 +96,20 @@ func reloadCacheFromDb(version *Version) *custom_errors.CustomError {
 	if err != nil {
 		return err.AST("reload cache from db")
 	}
-	savePerformancesInCache(version.ID, mappers.countries, mappers.apps, performances)
+	savePerformancesInCache(version.ID, mappers.countryMapper.items, mappers.appMapper.items, performances)
 	return nil
 }
 
+func buildSdkScoresFromSdkPerformances(performances []SdkPerformance) []structs.SdkScore {
+	sdkScores := make([]structs.SdkScore, len(performances))
+	for index, performance := range performances {
+		sdkScores[index] = structs.SdkScore{
+			Sdk:   mappers.sdkMapper.itemIdToName[int(performance.Sdk)],
+			Score: int(performance.Score),
+		}
+	}
+	return sdkScores
+}
 func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceResponse, *custom_errors.CustomError) {
 	latestVersion, err := dbVersionGetLatest()
 	if err != nil {
@@ -121,8 +130,8 @@ func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceRespons
 		}
 	}
 
-	countryID, existCountryName := mappers.countryNameToId[options.Country]
-	appID, existAppName := mappers.appNameToId[options.AppName]
+	countryID, existCountryName := mappers.countryMapper.itemNameToId[options.Country]
+	appID, existAppName := mappers.appMapper.itemNameToId[options.AppName]
 	if !existAppName {
 		return nil, custom_errors.GetNotValidDataError("App name is not valid")
 	}
@@ -130,34 +139,9 @@ func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceRespons
 		return nil, custom_errors.GetNotValidDataError("Country name is not valid")
 	}
 
-	bannerPerformances := getSdksFromCache(constants.AdTypeBannerId, countryID, appID)
-	interstitialPerformances := getSdksFromCache(constants.AdTypeInterstitialId, countryID, appID)
-	rewardedPerformances := getSdksFromCache(constants.AdTypeRewardedId, countryID, appID)
-
-	bannerR := make([]structs.SdkScore, len(bannerPerformances))
-	interstitialR := make([]structs.SdkScore, len(interstitialPerformances))
-	rewardedR := make([]structs.SdkScore, len(rewardedPerformances))
-
-	for index, performance := range bannerPerformances {
-		bannerR[index] = structs.SdkScore{
-			Sdk:   mappers.sdkIdToName[int(performance.Sdk)],
-			Score: int(performance.Score),
-		}
-	}
-
-	for index, performance := range interstitialPerformances {
-		interstitialR[index] = structs.SdkScore{
-			Sdk:   mappers.sdkIdToName[int(performance.Sdk)],
-			Score: int(performance.Score),
-		}
-	}
-
-	for index, performance := range rewardedPerformances {
-		rewardedR[index] = structs.SdkScore{
-			Sdk:   mappers.sdkIdToName[int(performance.Sdk)],
-			Score: int(performance.Score),
-		}
-	}
+	bannerR := buildSdkScoresFromSdkPerformances(getSdksPerforamncesFromCache(constants.AdTypeBannerId, countryID, appID))
+	interstitialR := buildSdkScoresFromSdkPerformances(getSdksPerforamncesFromCache(constants.AdTypeInterstitialId, countryID, appID))
+	rewardedR := buildSdkScoresFromSdkPerformances(getSdksPerforamncesFromCache(constants.AdTypeRewardedId, countryID, appID))
 
 	return &structs.PerformanceResponse{
 		Country:      options.Country,
@@ -168,7 +152,7 @@ func GetPerformances(options *structs.QueryOptions) (*structs.PerformanceRespons
 	}, nil
 
 }
-func StorePerformances(performances []structs.Performance) (*Version, *custom_errors.CustomError) {
+func StorePerformances(performances []*structs.Performance) (*Version, *custom_errors.CustomError) {
 	var newTableIndex int
 	versionsCount, err := dbVersionCount()
 	if err != nil {
@@ -203,22 +187,22 @@ func StorePerformances(performances []structs.Performance) (*Version, *custom_er
 		return nil, err.AST("store performances")
 	}
 
-	for _, item := range newMappers.countries {
-		err = dbCountryCreate(newTableIndex, &item)
+	for _, item := range newMappers.countryMapper.items {
+		err = dbCountryCreate(newTableIndex, item)
 		if err != nil {
 			return nil, err.AST("store performances")
 		}
 	}
 
-	for _, item := range newMappers.apps {
-		err = dbAppCreate(newTableIndex, &item)
+	for _, item := range newMappers.appMapper.items {
+		err = dbAppCreate(newTableIndex, item)
 		if err != nil {
 			return nil, err.AST("store performances")
 		}
 	}
 
-	for _, item := range newMappers.sdks {
-		err = dbSdkCreate(newTableIndex, &item)
+	for _, item := range newMappers.sdkMapper.items {
+		err = dbSdkCreate(newTableIndex, item)
 		if err != nil {
 			return nil, err.AST("store performances")
 		}
@@ -233,9 +217,9 @@ func StorePerformances(performances []structs.Performance) (*Version, *custom_er
 		data = append(data, Performance{
 			ID:      index,
 			AdType:  adType,
-			Country: newMappers.countryNameToId[item.Country],
-			App:     newMappers.appNameToId[item.App],
-			Sdk:     newMappers.sdkNameToId[item.Sdk],
+			Country: newMappers.countryMapper.itemNameToId[item.Country],
+			App:     newMappers.appMapper.itemNameToId[item.App],
+			Sdk:     newMappers.sdkMapper.itemNameToId[item.Sdk],
 			Score:   item.Score,
 		})
 	}

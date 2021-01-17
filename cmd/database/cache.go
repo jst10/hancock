@@ -9,9 +9,9 @@ var cache [][][][]SdkPerformance
 
 func savePerformancesInCache(
 	versionId int,
-	countries []Country,
-	apps []App,
-	performances []Performance) {
+	countries []*CodeList,
+	apps []*CodeList,
+	performances []*Performance) {
 
 	numberOfTypes := len(constants.AddTypes)
 	numberOfCountries := len(countries)
@@ -43,7 +43,7 @@ func savePerformancesInCache(
 	cache = tmpCache
 }
 
-func getSdksFromCache(adTypeId int, countryId int, appId int) []SdkPerformance {
+func getSdksPerforamncesFromCache(adTypeId int, countryId int, appId int) []SdkPerformance {
 	if cacheVersionId != -1 {
 		return cache[adTypeId][countryId][appId]
 	} else {

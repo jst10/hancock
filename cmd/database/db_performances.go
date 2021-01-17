@@ -56,9 +56,9 @@ func dbPerformanceCreateBulk(tableIndex int, performances []Performance) *custom
 	return nil
 }
 
-func dbPerformanceAll(tableIndex int) ([]Performance, *custom_errors.CustomError) {
+func dbPerformanceAll(tableIndex int) ([]*Performance, *custom_errors.CustomError) {
 	tableName := dbPerformanceTablePrefix + strconv.Itoa(tableIndex)
-	items := make([]Performance, 0)
+	items := make([]*Performance, 0)
 	results, err := dbQuery("SELECT * FROM " + tableName + "  ORDER BY score DESC, sdk ASC")
 	if err != nil {
 		return nil, err.AST("select from performance table")
@@ -75,7 +75,7 @@ func dbPerformanceAll(tableIndex int) ([]Performance, *custom_errors.CustomError
 		if err != nil {
 			continue
 		}
-		items = append(items, item)
+		items = append(items, &item)
 	}
 	return items, nil
 }

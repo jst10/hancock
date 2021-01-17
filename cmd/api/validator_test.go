@@ -8,48 +8,48 @@ import (
 func TestArePerformancesValid(t *testing.T) {
 	testCases := []struct {
 		Name     string
-		Values   []structs.Performance
+		Values   []*structs.Performance
 		Expected bool
 	}{
-		{"Empty data", []structs.Performance{}, false},
-		{"Not all base types", []structs.Performance{
-			structs.Performance{AdType: "a", Country: "a", App: "a", Sdk: "a", Score: 1},
+		{"Empty data", []*structs.Performance{}, false},
+		{"Not all base types", []*structs.Performance{
+			{AdType: "a", Country: "a", App: "a", Sdk: "a", Score: 1},
 		}, false},
-		{"All base ad type + extra", []structs.Performance{
-			structs.Performance{AdType: "banner", Country: "a", App: "a", Sdk: "a", Score: 1},
-			structs.Performance{AdType: "interstitial", Country: "a", App: "a", Sdk: "a", Score: 1},
-			structs.Performance{AdType: "rewarded", Country: "a", App: "a", Sdk: "a", Score: 1},
-			structs.Performance{AdType: "a", Country: "a", App: "a", Sdk: "a", Score: 1},
+		{"All base ad type + extra", []*structs.Performance{
+			{AdType: "banner", Country: "a", App: "a", Sdk: "a", Score: 1},
+			{AdType: "interstitial", Country: "a", App: "a", Sdk: "a", Score: 1},
+			{AdType: "rewarded", Country: "a", App: "a", Sdk: "a", Score: 1},
+			{AdType: "a", Country: "a", App: "a", Sdk: "a", Score: 1},
 		}, false},
-		{"All base types", []structs.Performance{
-			structs.Performance{AdType: "banner", Country: "a", App: "a", Sdk: "a", Score: 1},
-			structs.Performance{AdType: "interstitial", Country: "a", App: "a", Sdk: "a", Score: 1},
-			structs.Performance{AdType: "rewarded", Country: "a", App: "a", Sdk: "a", Score: 1},
+		{"All base types", []*structs.Performance{
+			{AdType: "banner", Country: "a", App: "a", Sdk: "a", Score: 1},
+			{AdType: "interstitial", Country: "a", App: "a", Sdk: "a", Score: 1},
+			{AdType: "rewarded", Country: "a", App: "a", Sdk: "a", Score: 1},
 		}, true},
-		{"Not the same countries", []structs.Performance{
-			structs.Performance{AdType: "banner", Country: "a", App: "a", Sdk: "a", Score: 1},
-			structs.Performance{AdType: "banner", Country: "b", App: "a", Sdk: "a", Score: 1},
-			structs.Performance{AdType: "interstitial", Country: "a", App: "a", Sdk: "a", Score: 1},
-			structs.Performance{AdType: "rewarded", Country: "a", App: "a", Sdk: "a", Score: 1},
+		{"Not the same countries", []*structs.Performance{
+			{AdType: "banner", Country: "a", App: "a", Sdk: "a", Score: 1},
+			{AdType: "banner", Country: "b", App: "a", Sdk: "a", Score: 1},
+			{AdType: "interstitial", Country: "a", App: "a", Sdk: "a", Score: 1},
+			{AdType: "rewarded", Country: "a", App: "a", Sdk: "a", Score: 1},
 		}, false},
-		{"Two sdks per each type", []structs.Performance{
-			structs.Performance{AdType: "banner", Country: "c1", App: "a1", Sdk: "s1", Score: 1},
-			structs.Performance{AdType: "banner", Country: "c1", App: "a1", Sdk: "s2", Score: 8},
-			structs.Performance{AdType: "interstitial", Country: "c1", App: "a1", Sdk: "s1", Score: 10},
-			structs.Performance{AdType: "interstitial", Country: "c1", App: "a1", Sdk: "s2", Score: 3},
-			structs.Performance{AdType: "rewarded", Country: "c1", App: "a1", Sdk: "s1", Score: 2},
-			structs.Performance{AdType: "rewarded", Country: "c1", App: "a1", Sdk: "s2", Score: 5},
+		{"Two sdks per each type", []*structs.Performance{
+			{AdType: "banner", Country: "c1", App: "a1", Sdk: "s1", Score: 1},
+			{AdType: "banner", Country: "c1", App: "a1", Sdk: "s2", Score: 8},
+			{AdType: "interstitial", Country: "c1", App: "a1", Sdk: "s1", Score: 10},
+			{AdType: "interstitial", Country: "c1", App: "a1", Sdk: "s2", Score: 3},
+			{AdType: "rewarded", Country: "c1", App: "a1", Sdk: "s1", Score: 2},
+			{AdType: "rewarded", Country: "c1", App: "a1", Sdk: "s2", Score: 5},
 		}, true},
-		{"Two apps per each type", []structs.Performance{
-			structs.Performance{AdType: "banner", Country: "c1", App: "a1", Sdk: "s1", Score: 1},
-			structs.Performance{AdType: "banner", Country: "c1", App: "a1", Sdk: "s2", Score: 8},
-			structs.Performance{AdType: "banner", Country: "c1", App: "a2", Sdk: "s1", Score: 3},
-			structs.Performance{AdType: "interstitial", Country: "c1", App: "a1", Sdk: "s1", Score: 10},
-			structs.Performance{AdType: "interstitial", Country: "c1", App: "a1", Sdk: "s2", Score: 3},
-			structs.Performance{AdType: "interstitial", Country: "c1", App: "a2", Sdk: "s1", Score: 3},
-			structs.Performance{AdType: "rewarded", Country: "c1", App: "a1", Sdk: "s1", Score: 2},
-			structs.Performance{AdType: "rewarded", Country: "c1", App: "a1", Sdk: "s2", Score: 5},
-			structs.Performance{AdType: "rewarded", Country: "c1", App: "a2", Sdk: "s1", Score: 7},
+		{"Two apps per each type", []*structs.Performance{
+			{AdType: "banner", Country: "c1", App: "a1", Sdk: "s1", Score: 1},
+			{AdType: "banner", Country: "c1", App: "a1", Sdk: "s2", Score: 8},
+			{AdType: "banner", Country: "c1", App: "a2", Sdk: "s1", Score: 3},
+			{AdType: "interstitial", Country: "c1", App: "a1", Sdk: "s1", Score: 10},
+			{AdType: "interstitial", Country: "c1", App: "a1", Sdk: "s2", Score: 3},
+			{AdType: "interstitial", Country: "c1", App: "a2", Sdk: "s1", Score: 3},
+			{AdType: "rewarded", Country: "c1", App: "a1", Sdk: "s1", Score: 2},
+			{AdType: "rewarded", Country: "c1", App: "a1", Sdk: "s2", Score: 5},
+			{AdType: "rewarded", Country: "c1", App: "a2", Sdk: "s1", Score: 7},
 		}, true},
 	}
 

@@ -8,7 +8,7 @@ import (
 // TODO just for debugging, so it may be one or two for loops more than needed
 // in production I would trust internal services that would provide me data
 
-func arePerformancesValid(performances []structs.Performance) bool {
+func arePerformancesValid(performances []*structs.Performance) bool {
 	// 1. we need to have all 3 types
 	// 2. add each type we need to have data for all countries
 	// 3. add each country we need to have data for each app name

@@ -1,5 +1,10 @@
 package database
 
+type CodeList struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 type App struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
@@ -40,16 +45,23 @@ type Version struct {
 	DbIndex   int    `json:"db_index"`
 }
 
+type CodeListMapper struct {
+	items        []*CodeList
+	itemNameToId map[string]int
+	itemIdToName map[int]string
+}
+
+func NewCodeListMapper() *CodeListMapper {
+	codeListMapper := CodeListMapper{
+		items:        make([]*CodeList, 0),
+		itemNameToId: make(map[string]int),
+		itemIdToName: make(map[int]string),
+	}
+	return &codeListMapper
+}
+
 type Mappers struct {
-	countries       []Country
-	countryNameToId map[string]int
-	countryIdToName map[int]string
-
-	apps        []App
-	appNameToId map[string]int
-	appIdToName map[int]string
-
-	sdks        []Sdk
-	sdkNameToId map[string]int
-	sdkIdToName map[int]string
+	countryMapper *CodeListMapper
+	appMapper     *CodeListMapper
+	sdkMapper     *CodeListMapper
 }

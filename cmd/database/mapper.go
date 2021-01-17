@@ -4,101 +4,57 @@ import (
 	"made.by.jst10/outfit7/hancock/cmd/structs"
 )
 
-func buildMappersFromRawData(performances []structs.Performance) *Mappers {
-	countries := make([]Country, 0)
-	countryNameToId := make(map[string]int)
-	countryIdToName := make(map[int]string)
+func insertCodeListInMapperIfNot(codeListMapper *CodeListMapper, name string) {
+	_, prs := codeListMapper.itemNameToId[name]
+	if !prs {
+		id := len(codeListMapper.items)
+		item := CodeList{ID: id, Name: name}
+		codeListMapper.items = append(codeListMapper.items, &item)
+		codeListMapper.itemNameToId[item.Name] = item.ID
+		codeListMapper.itemIdToName[item.ID] = item.Name
+	}
+}
 
-	apps := make([]App, 0)
-	appNameToId := make(map[string]int)
-	appIdToName := make(map[int]string)
-
-	sdks := make([]Sdk, 0)
-	sdkNameToId := make(map[string]int)
-	sdkIdToName := make(map[int]string)
+func buildMappersFromRawData(performances []*structs.Performance) *Mappers {
+	countryMapper := NewCodeListMapper()
+	appMapper := NewCodeListMapper()
+	sdkMapper := NewCodeListMapper()
 
 	for _, performance := range performances {
-		countryName := performance.Country
-		appName := performance.App
-		sdkName := performance.Sdk
-
-		_, prs := countryNameToId[countryName]
-		if !prs {
-			id := len(countries)
-			country := Country{ID: id, Name: countryName}
-			countries = append(countries, country)
-			countryNameToId[country.Name] = country.ID
-			countryIdToName[country.ID] = country.Name
-		}
-
-		_, prs = appNameToId[appName]
-		if !prs {
-			id := len(apps)
-			app := App{ID: id, Name: appName}
-			apps = append(apps, app)
-			appNameToId[app.Name] = app.ID
-			appIdToName[app.ID] = app.Name
-		}
-
-		_, prs = sdkNameToId[sdkName]
-		if !prs {
-			id := len(sdks)
-			sdk := Sdk{ID: id, Name: sdkName}
-			sdks = append(sdks, sdk)
-			sdkNameToId[sdk.Name] = sdk.ID
-			sdkIdToName[sdk.ID] = sdk.Name
-		}
-
+		insertCodeListInMapperIfNot(countryMapper, performance.Country)
+		insertCodeListInMapperIfNot(appMapper, performance.App)
+		insertCodeListInMapperIfNot(sdkMapper, performance.Sdk)
 	}
 	return &Mappers{
-		countries:       countries,
-		countryNameToId: countryNameToId,
-		countryIdToName: countryIdToName,
-		apps:            apps,
-		appNameToId:     appNameToId,
-		appIdToName:     appIdToName,
-		sdks:            sdks,
-		sdkNameToId:     sdkNameToId,
-		sdkIdToName:     sdkIdToName,
+		countryMapper: countryMapper,
+		appMapper:     appMapper,
+		sdkMapper:     sdkMapper,
+	}
+}
+
+func buildCodeListMapperFromDbData(items []*CodeList) *CodeListMapper {
+	itemNameToId := make(map[string]int)
+	itemIdToName := make(map[int]string)
+	for _, item := range items {
+		itemNameToId[item.Name] = item.ID
+		itemIdToName[item.ID] = item.Name
+	}
+	return &CodeListMapper{
+		items:        items,
+		itemNameToId: itemNameToId,
+		itemIdToName: itemIdToName,
 	}
 }
 
 func buildMappersFromDBData(
-	countries []Country,
-	apps []App,
-	sdks []Sdk,
+	countries []*CodeList,
+	apps []*CodeList,
+	sdks []*CodeList,
 ) *Mappers {
-	countryNameToId := make(map[string]int)
-	countryIdToName := make(map[int]string)
-
-	appNameToId := make(map[string]int)
-	appIdToName := make(map[int]string)
-
-	sdkNameToId := make(map[string]int)
-	sdkIdToName := make(map[int]string)
-
-	for _, country := range countries {
-		countryNameToId[country.Name] = country.ID
-		countryIdToName[country.ID] = country.Name
-	}
-	for _, app := range apps {
-		appNameToId[app.Name] = app.ID
-		appIdToName[app.ID] = app.Name
-	}
-	for _, sdk := range sdks {
-		sdkNameToId[sdk.Name] = sdk.ID
-		sdkIdToName[sdk.ID] = sdk.Name
-	}
 
 	return &Mappers{
-		countries:       countries,
-		countryNameToId: countryNameToId,
-		countryIdToName: countryIdToName,
-		apps:            apps,
-		appNameToId:     appNameToId,
-		appIdToName:     appIdToName,
-		sdks:            sdks,
-		sdkNameToId:     sdkNameToId,
-		sdkIdToName:     sdkIdToName,
+		countryMapper: buildCodeListMapperFromDbData(countries),
+		appMapper:     buildCodeListMapperFromDbData(apps),
+		sdkMapper:     buildCodeListMapperFromDbData(sdks),
 	}
 }
